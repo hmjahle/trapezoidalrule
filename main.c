@@ -39,16 +39,16 @@ int main() {
     local_b = local_a + local_n * h;
     local_int = Trap(local_a, local_b, local_n, h);
 
-    if (my_rank != 0) {
-        MPI_Send(&local_int, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
-    } else {
-        total_int = local_int;
-        for (int source = 1; source < comm_sz; source++ ) {
-            MPI_Recv(&local_int, 1, MPI_DOUBLE, source, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            total_int += local_int;
-        } 
-    }
-    
+    MPI_Reduce(
+        &local_int,     /* in  */
+        &total_int,     /* out */ 
+        1,              /* in  */
+        MPI_DOUBLE,     /* in  */
+        MPI_SUM,        /* in  */
+        0,              /* in  */ 
+        MPI_COMM_WORLD  /* in  */
+    );
+
     if (my_rank == 0) {
         printf("WIth n = %d trapezoids, our estimate\n", n);
         printf("of the integral from %f to %f = %.2lf\n", a, b, total_int);
