@@ -45,7 +45,7 @@ int main() {
         1,              /* in  */
         MPI_DOUBLE,     /* in  */
         MPI_SUM,        /* in  */
-        0,              /* in  */ 
+        0,              /* in  */  // Destination process 
         MPI_COMM_WORLD  /* in  */
     );
 
@@ -89,18 +89,21 @@ void Get_input(
     double * b_p,   /* out */
     int * n_p       /* out */
 ) {
-
     if (my_rank == 0) {
         printf("Enter a, b, and n\n");
         scanf("%lf %lf %d", a_p, b_p, n_p);
-        for (int dest = 1; dest < comm_sz; dest++) {
-            MPI_Send(a_p, 1, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD);
-            MPI_Send(b_p, 1, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD);
-            MPI_Send(n_p, 1, MPI_INT, dest, 0, MPI_COMM_WORLD);
-        }
-    } else { /* my_rank != 0 */
-        MPI_Recv(a_p, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Recv(b_p, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Recv(n_p, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
+
+    // Since souce process = 0 here, the MPI_Bcast understands that
+    // if the process is != 0, then we will get the a_p, b_p and n_p values
+    // from the void pointer, while if the rank == 0, then we will send the data
+    // through the pointer. 
+    //
+    // This means that void * data_p (e.g., the a_p pointer) is an input argument
+    // for the process equal to the destionation argument (i.e., process zero in this case)
+    // and an output argument for all other processes
+    //
+    MPI_Bcast(a_p, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(b_p, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(n_p, 1, MPI_INT, 0, MPI_COMM_WORLD);
 }
